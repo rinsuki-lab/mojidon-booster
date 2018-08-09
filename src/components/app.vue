@@ -173,7 +173,7 @@ export default class App extends Vue {
                 Authorization: "Bearer "+token,
             }
         })
-        this.stateMax = this.accounts.length
+        this.stateMax = this.accounts.length * 2
         this.stateNow = 0
         var localIds: string[] = []
         for (const tootUrl of this.accounts) {
