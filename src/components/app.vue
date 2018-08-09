@@ -1,6 +1,7 @@
 <template>
     <div>
         <h1>Mojidon Booster</h1>
+        <p>やりすぎて怒られたりフォロワー減っても知らん</p>
         <input type="text" v-model="text"><input type="button" @click="fetchMojiAccount" value="取得">
         <div v-if="accounts.length">
             <ul>
@@ -19,7 +20,8 @@
                     </select>
                     <input type="button" value="追加" @click="dialogState='authInputInstance'">
                 </p>
-                <input type="button" @click="boost" value="boost">
+                <input type="button" @click="boost" value="boost" :disabled="stateMax ? stateMax !== stateNow : false">
+                <progress :max="stateMax" :value="stateNow"/>
             </div>
         </div>
         <div class="credit">
@@ -59,6 +61,8 @@ export default class App extends Vue {
     loginInstanceInfo?: {clientId: string, clientSecret: string} = undefined
     oauthCode = ""
     nowSelectAccount: string | null = null
+    stateMax = 0
+    stateNow = 0
 
     async mounted() {
         await this.fetchAccountsFromDatabase()
@@ -161,6 +165,8 @@ export default class App extends Vue {
                 Authorization: "Bearer "+token,
             }
         })
+        this.stateMax = this.accounts.length
+        this.stateNow = 0
         var localIds: string[] = []
         for (const tootUrl of this.accounts) {
             if (typeof tootUrl === "string") {
@@ -170,11 +176,13 @@ export default class App extends Vue {
                 if (post.reblogged) await requestor.post("/api/v1/statuses/"+post.id+"/unreblog")
                 localIds.push(post.id)
                 await sleep(1000)
+                this.stateNow++
             }
         }
         for (const id of localIds.reverse()) {
             await requestor.post("/api/v1/statuses/"+id+"/reblog")
             await sleep(1000)
+            this.stateNow++
         }
     }
 }
