@@ -83,13 +83,21 @@ export default class App extends Vue {
             const charCode = char.charCodeAt(0).toString(16)
             console.log(charCode)
             try {
+                const cached = await database.mojiAccounts.get(charCode)
+                if (cached) throw cached.url
                 const res = await fetch("https://moji.m.to/@"+charCode+".atom")
                 if (!res.ok) {
                     throw new Error(res.statusText)
                 }
                 const parser = new DOMParser()
                 const dom = await parser.parseFromString(await res.text(), "application/xml")
-                throw dom.querySelector(`feed > entry > link[rel=alternate][type="text/html"]`)!.getAttribute("href")
+                const url = dom.querySelector(`feed > entry > link[rel=alternate][type="text/html"]`)!.getAttribute("href")
+                if (url == null) throw new Error("url is null")
+                database.mojiAccounts.put({
+                    code: charCode,
+                    url,
+                })
+                throw url
             } catch(e) {
                 Vue.set(this.accounts, i, e)
             }
